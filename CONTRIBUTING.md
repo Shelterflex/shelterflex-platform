@@ -109,6 +109,18 @@ cargo test
 cargo build --release
 ```
 
+## If the repository is renamed on GitHub
+
+If the organization renames this repository, GitHub will usually redirect the old URL to the new one.
+
+If your local pushes start failing, update your `origin` remote URL:
+
+```bash
+git remote -v
+git remote set-url origin https://github.com/Shelterflex/monorepo.git
+git remote -v
+```
+
 ## Definitions of Done (per issue type)
 
 ### Frontend issues
