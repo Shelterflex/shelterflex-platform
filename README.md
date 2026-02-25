@@ -46,7 +46,7 @@ The backend runs on `http://localhost:4000`.
 ```bash
 cd contracts
 cargo test
-cargo build --release
+stellar contract build
 ```
 
 For local/testnet deployment instructions see `contracts/README.md`.
