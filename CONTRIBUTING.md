@@ -47,7 +47,7 @@ npm run dev
 ```bash
 cd contracts
 cargo test
-cargo build --release
+stellar contract build
 ```
 
 For Soroban CLI deployment instructions see `contracts/README.md`.
@@ -106,7 +106,7 @@ npm run build
 ```bash
 cd contracts
 cargo test
-cargo build --release
+stellar contract build
 ```
 
 ## If the repository is renamed on GitHub
