@@ -41,7 +41,7 @@ npm run dev
 
 ```bash
 cargo test
-cargo build --release
+stellar contract build
 ```
 
 ## Where to put new code
