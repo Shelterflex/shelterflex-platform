@@ -163,6 +163,33 @@ DEK → Encrypted with KMS KEK
 * DEKs never stored plaintext
 * All key structs implement `Zeroize`
 
+### Envelope Format (Persisted Encrypted Secret Key)
+
+The backend persists custodial wallet secret keys as a **base64-encoded UTF-8 JSON envelope**.
+
+Storage representation:
+
+```
+encryptedSecretKey = base64(utf8(JSON.stringify(envelope)))
+```
+
+Envelope JSON (versioned):
+
+```json
+{
+  "version": 1,
+  "iv": "<base64-encoded 12-byte nonce>",
+  "authTag": "<base64-encoded 16-byte GCM auth tag>",
+  "ciphertext": "<base64-encoded ciphertext bytes>"
+}
+```
+
+Notes:
+
+* `version` allows future envelope upgrades without ambiguity.
+* Any modification to `iv`, `authTag`, or `ciphertext` must cause decryption to fail.
+* The `keyId` stored alongside the envelope identifies which master key material/version was used, to support rotation.
+
 ### Required Env Vars
 
 | Variable                     | Purpose          |
