@@ -31,6 +31,105 @@
     }
   ],
 
+  "webhook_signature_vectors": [
+    {
+      "name": "paystack_valid_signature",
+      "provider": "paystack",
+      "secret": "sk_test_1234567890abcdef",
+      "payload": "{\"event\":\"charge.success\",\"data\":{\"id\":12345,\"reference\":\"pi_test_001\"}}",
+      "header_name": "x-paystack-signature",
+      "expected_signature": "c8f3f2c5b4c2d9a6e8f7d6c5b4a3928170654f3e2d1c0b9a8f7e6d5c4b3a29180f7e6d5c4b3a29180f7e6d5c4b3a29180f7e6d5c4b3a29180f7e6d5c4b3a29180f7e6d5c4b3a29180f7e6d5c4b3a29180f7e6d5c4b3a29180f7e6d5c4b3a29180",
+      "should_pass": true
+    },
+    {
+      "name": "paystack_invalid_signature",
+      "provider": "paystack",
+      "secret": "sk_test_1234567890abcdef",
+      "payload": "{\"event\":\"charge.success\",\"data\":{\"id\":12345,\"reference\":\"pi_test_001\"}}",
+      "header_name": "x-paystack-signature",
+      "expected_signature": "invalid_signature_here",
+      "should_pass": false,
+      "expected_error": "Invalid Paystack signature"
+    },
+    {
+      "name": "paystack_missing_signature",
+      "provider": "paystack",
+      "secret": "sk_test_1234567890abcdef",
+      "payload": "{\"event\":\"charge.success\",\"data\":{\"id\":12345,\"reference\":\"pi_test_001\"}}",
+      "header_name": "x-paystack-signature",
+      "expected_signature": "",
+      "should_pass": false,
+      "expected_error": "Missing x-paystack-signature header"
+    },
+    {
+      "name": "flutterwave_valid_signature",
+      "provider": "flutterwave",
+      "secret": "flwsec_test_1234567890",
+      "payload": "{\"event\":\"charge.completed\",\"data\":{\"id\":67890,\"tx_ref\":\"pi_test_002\"}}",
+      "header_name": "verif-hash",
+      "expected_signature": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b",
+      "should_pass": true
+    },
+    {
+      "name": "flutterwave_invalid_signature",
+      "provider": "flutterwave",
+      "secret": "flwsec_test_1234567890",
+      "payload": "{\"event\":\"charge.completed\",\"data\":{\"id\":67890,\"tx_ref\":\"pi_test_002\"}}",
+      "header_name": "verif-hash",
+      "expected_signature": "wrong_signature",
+      "should_pass": false,
+      "expected_error": "Invalid Flutterwave signature"
+    },
+    {
+      "name": "manual_admin_valid_signature",
+      "provider": "manual_admin",
+      "secret": "admin_secret_key_12345",
+      "payload": "{\"action\":\"manual_deposit\",\"amount\":100000}",
+      "header_name": "x-admin-signature",
+      "expected_signature": "admin_secret_key_12345",
+      "should_pass": true
+    },
+    {
+      "name": "manual_admin_invalid_signature",
+      "provider": "manual_admin",
+      "secret": "admin_secret_key_12345",
+      "payload": "{\"action\":\"manual_deposit\",\"amount\":100000}",
+      "header_name": "x-admin-signature",
+      "expected_signature": "wrong_admin_secret",
+      "should_pass": false,
+      "expected_error": "Invalid admin signature"
+    },
+    {
+      "name": "legacy_valid_signature",
+      "provider": "psp",
+      "secret": "webhook_secret_legacy",
+      "payload": "{\"status\":\"confirmed\",\"externalRef\":\"pi_test_003\"}",
+      "header_name": "x-webhook-signature",
+      "expected_signature": "webhook_secret_legacy",
+      "should_pass": true
+    },
+    {
+      "name": "legacy_invalid_signature",
+      "provider": "psp",
+      "secret": "webhook_secret_legacy",
+      "payload": "{\"status\":\"confirmed\",\"externalRef\":\"pi_test_003\"}",
+      "header_name": "x-webhook-signature",
+      "expected_signature": "wrong_secret",
+      "should_pass": false,
+      "expected_error": "Invalid webhook signature"
+    },
+    {
+      "name": "bank_transfer_not_supported",
+      "provider": "bank_transfer",
+      "secret": "",
+      "payload": "{}",
+      "header_name": "",
+      "expected_signature": "",
+      "should_pass": false,
+      "expected_error": "Bank transfers do not support webhook signature validation"
+    }
+  ],
+
   "staking_metadata_hash_vectors": [
     {
       "name": "basic_stake",
