@@ -59,6 +59,10 @@ stellar contract build
 
 - See [`contracts/README.md`](contracts/README.md) for deployment instructions
 
+## Contributing to Contracts
+
+For details on proposing and approving contract upgrades, see **[Contract Upgrade Process](docs/contracts/UPGRADE_PROCESS.md)**.
+
 ## Troubleshooting
 
 ### Node version issues
