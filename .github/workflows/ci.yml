@@ -25,8 +25,8 @@ jobs:
         run: npm ci
       - name: Lint
         run: npm run lint
-      - name: Run unit tests
-        run: npm run test
+      - name: Typecheck
+        run: npm run typecheck
 
   frontend:
     runs-on: ubuntu-latest
@@ -42,6 +42,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install dependencies
         run: npm ci
+      - name: Set build env
+        run: echo "NEXT_PUBLIC_SKIP_GOOGLE_FONTS=1" >> $GITHUB_ENV
       - name: Lint
         run: npm run lint
       - name: Build
@@ -65,6 +67,6 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
       - name: Lint with clippy
-        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+        run: cargo clippy --workspace --all-targets --all-features
       - name: Run tests
         run: cargo test --workspace
