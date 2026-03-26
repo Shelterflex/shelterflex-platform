@@ -17,3 +17,5 @@ contracts/target
 contracts/.soroban
 
 .kiro/
+issue.md
+pr.md
