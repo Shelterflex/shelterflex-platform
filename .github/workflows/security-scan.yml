@@ -59,13 +59,12 @@ jobs:
       - name: Install security-scan dependencies
         run: |
           cd security-scan
-          npm install --save-dev typescript @types/node uuid @types/uuid
-          npm install --save-dev eslint-plugin-security
+          npm install typescript @types/node uuid @types/uuid eslint-plugin-security
 
       - name: Build security scanner
         run: |
           cd security-scan
-          npx tsc --outDir dist --module commonjs --target es2022 --esModuleInterop --resolveJsonModule --skipLibCheck orchestrator.ts
+          npx tsc --outDir dist --module commonjs --target es2022 --esModuleInterop --resolveJsonModule --skipLibCheck --moduleResolution node *.ts scanners/*.ts
 
       - name: Run Security Scan
         id: scan
