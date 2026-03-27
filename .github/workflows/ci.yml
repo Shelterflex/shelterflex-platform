@@ -24,10 +24,10 @@ jobs:
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
-      - uses: pnpm/action-setup@v3
-
       - name: Enable corepack (pnpm)
         run: corepack enable
+
+      - uses: pnpm/action-setup@v3
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
