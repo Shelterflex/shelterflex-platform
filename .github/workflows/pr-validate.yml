@@ -24,7 +24,7 @@ jobs:
           fi
 
           # Check for linked issue (e.g., Fixes #123 or Closes #123)
-          if [[ ! "$PR_BODY" =~ (Fixes|Closes|Resolves|Related to)\s#[0-9]+ ]]; then
+          if [[ ! "$PR_BODY" =~ (Fixes|Closes|Resolves|Related to)[[:space:]]+#[0-9]+ ]]; then
             echo "::error::Consider linking an issue (e.g., 'Fixes #123')."
             # Uncomment the next line to make this a hard error
             # exit 1
@@ -35,7 +35,7 @@ jobs:
           for section in "${required_sections[@]}"; do
             # Use unquoted section for regex match
             if [[ ! "$PR_BODY" =~ $section ]]; then
-              echo "::error::Missing required section: $section. Please use the PR template."
+              echo "::error::Missing required section: $section. Please use the PR template (## Summary, ## Changes, ## Checklist)."
               exit 1
             fi
           done
