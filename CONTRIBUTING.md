@@ -198,21 +198,26 @@ git remote -v
 
 ## PR description requirements (to pass CI)
 
-This repo runs a **PR Validation** check on every Pull Request. Your PR will fail if the PR description is empty.
+This repo runs a **PR Validation** check on every Pull Request. Your PR will fail if the PR description is empty or missing required sections.
 
 Minimum requirements:
 
 - The PR description must not be empty.
-- It should clearly state **what** changes are being made and **why**.
+- The PR description must include these headings (exact text):
+  - `## Summary`
+  - `## Changes`
+  - `## Checklist`
 
 Strongly recommended:
 
 - Link an issue in the PR description (example: `Closes #123`).
-- Include screenshots for UI changes.
-- [ ] CI checks pass
-- [ ] I tested locally
-- [ ] I did not commit secrets
-- [ ] I updated docs if needed
+
+If your PR is a **contract upgrade / deploy**, the validator will also require these headings:
+
+- `### Network`
+- `### New Contract`
+- `### Upgrade Governance`
+- `### Verification Steps`
 
 Copy/paste PR description example (passes validation):
 
