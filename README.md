@@ -15,6 +15,7 @@ The platform combines three layers:
 | **Tenant** | Browses listings, pays a 20–40% deposit upfront, repays the balance over time |
 | **Landlord** | Lists properties directly, receives guaranteed/partial payments, avoids agent fees |
 | **Whistleblower** | Reports fraudulent or inaccurate listings and earns on-chain rewards — functioning as a decentralized trust layer and organic quality-signal for the platform |
+| **Freelance Inspector** | Physically verifies property conditions and submits structured inspection reports |
 
 Whistleblowers are a first-class participant in the Shelterflex ecosystem. By surfacing fake listings and bad actors, they improve the overall listing quality, protect tenants from fraud, and make Shelterflex more attractive to both sides of the market. In this sense they serve an **advertising function**: every verified listing they help maintain increases platform credibility and drives organic adoption.
 
@@ -26,7 +27,7 @@ This repository is organized as **three independent projects**:
 
 - `frontend/` - Next.js (React) web app
 - `backend/` - Node.js (TypeScript + Express) API
-- `contracts/` - Soroban (Rust) smart contracts
+- `contracts/` - Smart contracts (currently prototyped on Soroban/Rust; target chain TBD)
 
 ## Business Model
 
@@ -49,9 +50,11 @@ Revenue is generated through:
 The platform's viability depends on its risk controls:
 
 - **Tenant screening** — income verification, employment checks, bank statement analysis, alternative data (mobile money, utility payments)
+- **Tenant Rating Card** — portable reputation profile accumulated across tenancies; accessible to landlords during applicant vetting
 - **Landlord protection** — partial upfront payout, optional rent guarantee insurance, escrow smart contracts
 - **Late payment controls** — grace periods, penalties, automated reminders, escalation workflows
 - **Whistleblower rewards** — on-chain incentive program that crowdsources detection of fraudulent listings and bad-faith actors
+- **Staking / liquidity programme** — planned for a future phase to back the financing float
 
 ## Quickstart (Pick One)
 
