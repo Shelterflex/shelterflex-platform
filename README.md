@@ -19,7 +19,7 @@ The platform combines three layers:
 
 Whistleblowers are a first-class participant in the Shelterflex ecosystem. By surfacing fake listings and bad actors, they improve the overall listing quality, protect tenants from fraud, and make Shelterflex more attractive to both sides of the market. In this sense they serve an **advertising function**: every verified listing they help maintain increases platform credibility and drives organic adoption.
 
-**Wallet Authentication** - Users can connect their Ethereum wallet for secure, self-custody authentication alongside traditional email/OTP login.
+**Wallet Authentication** - Users can connect their Stellar wallet (e.g., Freighter) for secure, self-custody authentication alongside traditional email/OTP login.
 
 **Security Scanning** - Automated security scanning runs on all pull requests to detect vulnerabilities in dependencies, code, and commits. See [Security Scanning](#security-scanning) for details.
 
