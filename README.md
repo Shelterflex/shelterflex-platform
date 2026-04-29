@@ -10,6 +10,7 @@ The platform combines three layers:
 
 ### Platform Stakeholders
 
+
 | Role | Description |
 |---|---|
 | **Tenant** | Browses listings, pays a 20–40% deposit upfront, repays the balance over time |
