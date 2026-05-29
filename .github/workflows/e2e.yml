@@ -1,0 +1,96 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [labeled]
+
+jobs:
+  e2e:
+    if: |
+      github.event_name == 'push' ||
+      contains(github.event.pull_request.labels.*.name, 'e2e')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: shelterflex
+          POSTGRES_PASSWORD: shelterflex
+          POSTGRES_DB: shelterflex_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://shelterflex:shelterflex@localhost:5432/shelterflex_test
+      TEST_DATABASE_URL: postgresql://shelterflex:shelterflex@localhost:5432/shelterflex_test
+      BACKEND_PORT: 3001
+      BASE_URL: http://localhost:3000
+      TEST_OTP: "123456"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json', '**/pnpm-lock.yaml') }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium firefox
+
+      - name: Run backend migrations
+        run: |
+          cd backend
+          for f in migrations/*.sql; do
+            psql "$DATABASE_URL" -f "$f" || true
+          done
+
+      - name: Start backend
+        run: |
+          cd backend
+          pnpm build
+          pnpm start &
+          npx wait-on http://localhost:$BACKEND_PORT/health --timeout 30000
+
+      - name: Start frontend
+        run: |
+          cd frontend
+          pnpm build
+          pnpm start &
+          npx wait-on $BASE_URL --timeout 60000
+
+      - name: Run E2E tests
+        run: pnpm exec playwright test --config=e2e/playwright.config.ts
+
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts-${{ github.run_id }}
+          path: |
+            test-results/e2e/
+            playwright-report/
+          retention-days: 7
