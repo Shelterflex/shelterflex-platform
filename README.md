@@ -106,6 +106,53 @@ stellar contract build
 
 - See [`contracts/README.md`](contracts/README.md) for deployment instructions
 
+### Option D: Full Stack (Docker Compose)
+
+Run the frontend, backend, and PostgreSQL together with hot-reload — no local Node.js or Postgres install required.
+
+**Prerequisites:** [Docker Desktop 4+](https://www.docker.com/products/docker-desktop/) with ports **3000**, **4000**, and **5432** available.
+
+```bash
+# From the repository root
+docker compose --env-file .env.docker up --build
+```
+
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:4000 |
+| Health check | http://localhost:4000/health |
+| PostgreSQL | `localhost:5432` (user/password/db: `postgres` / `postgres` / `shelterflex_dev`) |
+
+**Database migrations** run automatically when the backend starts. After adding new SQL files to `backend/migrations/`, restart the backend:
+
+```bash
+docker compose restart backend
+```
+
+**Optional services** (included via `docker-compose.override.yml`):
+
+- **Redis** — enables real Redis instead of the in-memory mock (`REDIS_DISABLED=false`)
+- **pgAdmin** — http://localhost:5050 (login: `admin@shelterflex.local` / `admin`)
+
+To include a local Soroban sandbox (Stellar Quickstart):
+
+```bash
+docker compose --env-file .env.docker --profile contracts up
+```
+
+Stellar Quickstart runs at http://localhost:8000.
+
+**Contract tests** still require a local Rust toolchain and Soroban CLI — WASM compilation is not run inside these dev containers. See [Option C](#option-c-contracts-only) for setup.
+
+**Tear down** (removes containers and volumes):
+
+```bash
+docker compose down -v
+```
+
+**Hot-reload:** Edit files under `frontend/` or `backend/` on the host; changes are picked up inside the containers via volume mounts. On macOS, file polling is enabled (`WATCHPACK_POLLING=true`) for reliable Next.js reloads.
+
 ## Contributing to Contracts
 
 For details on proposing and approving contract upgrades, see **[Contract Upgrade Process](docs/contracts/UPGRADE_PROCESS.md)**.
