@@ -1,0 +1,7 @@
+shamefully-hoist=true
+auto-install-peers=true
+enable-pre-post-scripts=true
+node-version=22.0.0
+
+# Allow build scripts for packages that need native compilation
+allow-build-scripts=@parcel/watcher,@swc/core,esbuild,sharp,unrs-resolver
