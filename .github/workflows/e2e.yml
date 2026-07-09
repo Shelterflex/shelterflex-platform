@@ -2,13 +2,21 @@
 # Full-stack end-to-end tests: brings up the whole stack via docker compose
 # (web + api + postgres + minio, pulled in as submodules) and runs the root
 # Playwright suite in e2e/ against it.
+#
+# MANUAL ONLY (workflow_dispatch) for now. The root e2e suite was never wired
+# into CI in the monorepo and still needs harness work before it can run green:
+#   1. Add e2e/package.json (pin @playwright/test ^1.53.2 to match the web app).
+#   2. Fix path assumptions in e2e/playwright.config.ts — testDir "./e2e" and
+#      globalSetup/globalTeardown "./e2e/helpers/..." assume the config sits at
+#      the repo root. Either move the config to the repo root, or change those
+#      paths to "." / "./helpers/...".
+#   3. These are cross-role UI tests (admin/auth/tenant/landlord/whistleblower)
+#      that need a seeded DB + authenticated sessions. Wire test-data seeding and
+#      auth bootstrap into globalSetup before expecting them to pass.
+# Once the above is done, re-enable the push/pull_request triggers below.
 name: E2E
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
