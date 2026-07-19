@@ -18,6 +18,10 @@ shared documentation, CI reusable workflows, and golden test vectors.
 - Changes to `test-vectors.json` are the **canonical** source — coordinate with the api and
   contracts repos, which vendor and drift-check against it.
 - Never commit secrets (`.env*` files, keys, seed phrases).
+- Do not modify anything under `.github/` — CI, workflows and issue templates are
+  maintainer-owned. This includes `security-scan-reusable.yml`, which the other three
+  repos call at a pinned tag. If an issue seems to need a pipeline change, deliver the
+  script or test it calls for and say so in the PR; a maintainer wires it up.
 
 ## Development setup
 
