@@ -15,7 +15,7 @@ Formerly a single monorepo, Shelterflex is now split into four repositories.
 
 | Repo | Responsibility | Stack |
 |---|---|---|
-| [shelterflex-web](https://github.com/Shelterflex/shelterflex-web) | Web app — UI for tenants, landlords, whistleblowers, inspectors, admins | Next.js (React), TypeScript, pnpm |
+| [shelterflex-web](https://github.com/Shelterflex/shelterflex-web) | Web app — UI for tenants, landlords, whistleblowers, inspectors, admins | Next.js (React), TypeScript, npm |
 | [shelterflex-api](https://github.com/Shelterflex/shelterflex-api) | REST API — deals, installments, earnings, risk/credit, Soroban RPC integration | Node.js, Express, TypeScript, npm |
 | [shelterflex-contracts](https://github.com/Shelterflex/shelterflex-contracts) | On-chain logic — escrow, staking, rent payments, whistleblower rewards, oracles | Soroban (Rust) |
 | [shelterflex-platform](https://github.com/Shelterflex/shelterflex-platform) | Orchestration, full-stack e2e, security scanning, shared docs, golden test vectors | Docker Compose, Playwright, TypeScript |
@@ -36,14 +36,15 @@ Formerly a single monorepo, Shelterflex is now split into four repositories.
                                                        └─────────────────────┘
 
    ┌───────────────────────── shelterflex-platform ─────────────────────────┐
-   │ docker compose (web + api + postgres + minio + stellar) via submodules  │
+   │ docker compose (web + api + postgres + minio + stellar) from GHCR images│
    │ full-stack e2e (Playwright) · security-scan · shared docs · test-vectors│
    └─────────────────────────────────────────────────────────────────────────┘
 ```
 
 - **web → api:** the only runtime dependency of the web app. Configured via `NEXT_PUBLIC_API_URL`. No shared build artifacts.
 - **api → contracts:** the API invokes/simulates contracts over Soroban RPC using contract IDs from the contracts repo's `deployment/deployed`. No shared code — the boundary is the deployed contract address + ABI.
-- **platform** depends on **web** and **api** as git submodules purely to orchestrate them for local full-stack development and end-to-end testing. It is the only repo that pulls the others together.
+- **platform → web/api:** the platform orchestrates the two app services for full-stack development and end-to-end testing, consuming them as container images published to GHCR (`ghcr.io/shelterflex/shelterflex-{web,api}`). There is no source-level dependency in either direction — no submodules, no vendored code.
+- **web/api → platform:** both app repos consume the platform's reusable security-scan workflow by reference, and send a `repository_dispatch` after publishing an image so the platform can run integration against that exact tag. This is the only coupling, and it is by URL and event, not by shared files.
 
 ## Shared contract: `test-vectors.json`
 
