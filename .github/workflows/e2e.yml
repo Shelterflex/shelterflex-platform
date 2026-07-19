@@ -1,49 +1,128 @@
 # shelterflex-platform  ->  .github/workflows/e2e.yml
-# Full-stack end-to-end tests: brings up the whole stack via docker compose
-# (web + api + postgres + minio, pulled in as submodules) and runs the root
+#
+# Full-stack integration: brings up the stack via docker compose and runs the
 # Playwright suite in e2e/ against it.
 #
-# MANUAL ONLY (workflow_dispatch) for now. The root e2e suite was never wired
-# into CI in the monorepo and still needs harness work before it can run green:
-#   1. Add e2e/package.json (pin @playwright/test ^1.53.2 to match the web app).
-#   2. Fix path assumptions in e2e/playwright.config.ts — testDir "./e2e" and
-#      globalSetup/globalTeardown "./e2e/helpers/..." assume the config sits at
-#      the repo root. Either move the config to the repo root, or change those
-#      paths to "." / "./helpers/...".
-#   3. These are cross-role UI tests (admin/auth/tenant/landlord/whistleblower)
-#      that need a seeded DB + authenticated sessions. Wire test-data seeding and
-#      auth bootstrap into globalSetup before expecting them to pass.
-# Once the above is done, re-enable the push/pull_request triggers below.
+# The application services are pulled as prebuilt images from GHCR. This repo
+# holds no application source and builds nothing.
+#
+# MANUAL ONLY. Nothing in shelterflex-web or shelterflex-api triggers this — each
+# repository's CI concerns only itself. Run it here when you want to check
+# integration, choosing which image tags to test.
+#
+# The suite cannot currently run: e2e/ has no package.json, and
+# e2e/playwright.config.ts has path assumptions that break. Tracked in
+# shelterflex-platform#1. Until that lands, `run_suite` defaults to false so the
+# workflow can still be used to check that a given pair of images pulls cleanly.
+
 name: E2E
 
 on:
   workflow_dispatch:
+    inputs:
+      api_tag:
+        description: shelterflex-api image tag
+        required: false
+        default: main
+        type: string
+      web_tag:
+        description: shelterflex-web image tag
+        required: false
+        default: main
+        type: string
+      run_suite:
+        description: Run the Playwright suite (currently expected to fail - see #1)
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
 
 jobs:
+  resolve-images:
+    name: Resolve and pull images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+
+    outputs:
+      api_tag: ${{ steps.tags.outputs.api_tag }}
+      web_tag: ${{ steps.tags.outputs.web_tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve image tags
+        id: tags
+        env:
+          INPUT_API: ${{ inputs.api_tag }}
+          INPUT_WEB: ${{ inputs.web_tag }}
+        run: |
+          api_tag="${INPUT_API:-main}"
+          web_tag="${INPUT_WEB:-main}"
+          echo "api_tag=$api_tag" >> "$GITHUB_OUTPUT"
+          echo "web_tag=$web_tag" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Resolved images"
+            echo "- api: \`$api_tag\`"
+            echo "- web: \`$web_tag\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull images
+        env:
+          API_TAG: ${{ steps.tags.outputs.api_tag }}
+          WEB_TAG: ${{ steps.tags.outputs.web_tag }}
+        run: |
+          docker pull "ghcr.io/shelterflex/shelterflex-api:$API_TAG"
+          docker pull "ghcr.io/shelterflex/shelterflex-web:$WEB_TAG"
+
   e2e:
     name: Full-stack Playwright
     runs-on: ubuntu-latest
+    needs: resolve-images
+    if: github.event_name == 'workflow_dispatch' && inputs.run_suite
     timeout-minutes: 30
+
+    permissions:
+      contents: read
+      packages: read
+
+    env:
+      API_TAG: ${{ needs.resolve-images.outputs.api_tag }}
+      WEB_TAG: ${{ needs.resolve-images.outputs.web_tag }}
+
     steps:
-      - name: Checkout (with submodules)
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Start stack
         run: |
           cp .env.docker .env
-          docker compose up -d --build
-          # wait for web to answer
-          for i in $(seq 1 60); do
-            curl -sf http://localhost:3000 >/dev/null && break
-            echo "waiting for web ($i)..."; sleep 5
-          done
+          docker compose up -d --wait --wait-timeout 300
 
       - name: Install e2e deps
         working-directory: e2e
@@ -58,6 +137,10 @@ jobs:
         env:
           BASE_URL: http://localhost:3000
         run: npx playwright test
+
+      - name: Dump service logs
+        if: failure()
+        run: docker compose logs --no-color --tail 200
 
       - name: Upload Playwright report
         if: always()

@@ -24,11 +24,26 @@ Whistleblowers are a first-class participant in the Shelterflex ecosystem. By su
 
 **Security Scanning** - Automated security scanning runs on all pull requests to detect vulnerabilities in dependencies, code, and commits. See [Security Scanning](#security-scanning) for details.
 
-This repository is organized as **three independent projects**:
+## Repositories
 
-- `frontend/` - Next.js (React) web app
-- `backend/` - Node.js (TypeScript + Express) API
-- `contracts/` - Smart contracts (currently prototyped on Soroban/Rust; target chain TBD)
+Shelterflex is built as **four independent repositories**. This one is the
+platform repository: it holds no application source, and instead provides the
+integration stack, the cross-repo end-to-end suite, shared CI policy, and the
+architecture documentation.
+
+| Repository | Contents |
+|---|---|
+| [shelterflex-web](https://github.com/Shelterflex/shelterflex-web) | Next.js (React) web app |
+| [shelterflex-api](https://github.com/Shelterflex/shelterflex-api) | Node.js (TypeScript + Express) API |
+| [shelterflex-contracts](https://github.com/Shelterflex/shelterflex-contracts) | Smart contracts (Soroban/Rust; target chain TBD) |
+| **shelterflex-platform** (here) | Integration stack, e2e suite, shared CI, docs |
+
+The repositories integrate at the artifact level rather than through submodules
+or a shared tree. `shelterflex-web` and `shelterflex-api` publish container
+images to GHCR on every merge to `main`; the compose stack in this repository
+pulls those images. Both app repos also consume this repository's reusable
+security-scan workflow, and notify it after publishing so integration runs can
+be triggered against a new image.
 
 ## Business Model
 
@@ -57,64 +72,43 @@ The platform's viability depends on its risk controls:
 - **Whistleblower rewards** — on-chain incentive program that crowdsources detection of fraudulent listings and bad-faith actors
 - **Staking / liquidity programme** — planned for a future phase to back the financing float
 
-## Quickstart (Pick One)
+## Quickstart
 
-New contributors can run **just one** component without setting up the others.
-
-## Option A: Frontend Only
-
-**Prerequisites:** Node.js 20+
+**To work on a component**, clone its repository and follow its README. Each one
+runs standalone; you do not need this repository to contribute to any of them.
 
 ```bash
-cd frontend
-npm install
-npm run dev
+git clone https://github.com/Shelterflex/shelterflex-web.git       # frontend
+git clone https://github.com/Shelterflex/shelterflex-api.git       # API
+git clone https://github.com/Shelterflex/shelterflex-contracts.git # contracts
 ```
 
-- Runs on: `http://localhost:3000`
-- Uses mock data (no backend required)
-- See [`frontend/README.md`](frontend/README.md) for details
+**To run the whole system together**, use the integration stack below.
 
-### Option B: Backend Only
+## Full Stack (Docker Compose)
 
-**Prerequisites:** Node.js 20+
+Runs the published frontend and backend images with PostgreSQL and MinIO. No
+local Node.js, Postgres or application source required — the images are pulled
+from GHCR.
 
-```bash
-cd backend
-npm install
-cp .env.example .env
-npm run dev
-```
-
-- Runs on: `http://localhost:4000`
-- Verify: `GET http://localhost:4000/health`
-- See [`backend/README.md`](backend/README.md) for API documentation
-
-### Option C: Contracts Only
-
-**Prerequisites:** Rust (stable), Soroban CLI (`stellar`)
-
-```bash
-cd contracts
-
-# Run tests
-cargo test
-
-# Build contract WASM
-stellar contract build
-```
-
-- See [`contracts/README.md`](contracts/README.md) for deployment instructions
-
-### Option D: Full Stack (Docker Compose)
-
-Run the frontend, backend, and PostgreSQL together with hot-reload — no local Node.js or Postgres install required.
-
-**Prerequisites:** [Docker Desktop 4+](https://www.docker.com/products/docker-desktop/) with ports **3000**, **4000**, and **5432** available.
+**Prerequisites:** [Docker Desktop 4+](https://www.docker.com/products/docker-desktop/) with ports **3000**, **4000**, **5432** and **9000** available.
 
 ```bash
 # From the repository root
-docker compose --env-file .env.docker up --build
+docker compose --env-file .env.docker up
+```
+
+By default this runs the `main` tag of each image. To pin a reproducible pair —
+for example to reproduce a failing integration run:
+
+```bash
+API_TAG=sha-84fe55b WEB_TAG=sha-486b4f7 docker compose --env-file .env.docker up
+```
+
+To pull newly published images rather than reusing local ones:
+
+```bash
+docker compose --env-file .env.docker pull
 ```
 
 | Service | URL |
@@ -124,10 +118,12 @@ docker compose --env-file .env.docker up --build
 | Health check | http://localhost:4000/health |
 | PostgreSQL | `localhost:5432` (user/password/db: `postgres` / `postgres` / `shelterflex_dev`) |
 
-**Database migrations** run automatically when the backend starts. After adding new SQL files to `backend/migrations/`, restart the backend:
+**Database migrations** run automatically when the backend starts, from the
+migrations baked into the API image. To pick up migrations added in
+`shelterflex-api`, pull a newer image tag and restart:
 
 ```bash
-docker compose restart backend
+docker compose pull backend && docker compose up -d backend
 ```
 
 **Optional services** (included via `docker-compose.override.yml`):
@@ -143,7 +139,9 @@ docker compose --env-file .env.docker --profile contracts up
 
 Stellar Quickstart runs at http://localhost:8000.
 
-**Contract tests** still require a local Rust toolchain and Soroban CLI — WASM compilation is not run inside these dev containers. See [Option C](#option-c-contracts-only) for setup.
+Stellar Quickstart only provides a local Soroban sandbox. It does not build or
+deploy contracts — see [shelterflex-contracts](https://github.com/Shelterflex/shelterflex-contracts)
+for the toolchain and test instructions.
 
 **Tear down** (removes containers and volumes):
 
@@ -151,77 +149,73 @@ Stellar Quickstart runs at http://localhost:8000.
 docker compose down -v
 ```
 
-**Hot-reload:** Edit files under `frontend/` or `backend/` on the host; changes are picked up inside the containers via volume mounts. On macOS, file polling is enabled (`WATCHPACK_POLLING=true`) for reliable Next.js reloads.
+**No hot-reload.** This stack runs prebuilt images and is for integration, not
+for developing the frontend or backend. To iterate on either, run it directly
+from its own repository against this stack's Postgres and MinIO.
 
 ## Contributing to Contracts
 
-For details on proposing and approving contract upgrades, see **[Contract Upgrade Process](docs/contracts/UPGRADE_PROCESS.md)**.
+For details on proposing and approving contract upgrades, see **[Contract Upgrade Process](https://github.com/Shelterflex/shelterflex-contracts/blob/main/docs/contracts/UPGRADE_PROCESS.md)** in the contracts repository.
 
 ## Troubleshooting
 
-### Node version issues
+Issues with a single component belong in that component's repository. The
+entries below cover the integration stack only.
+
+### Image pull fails or a tag is not found
+
+The images are published by `shelterflex-web` and `shelterflex-api` on merge to
+`main`. If a tag is missing, check that the **Publish image** workflow succeeded
+in that repository. For private packages, authenticate first:
 
 ```bash
-node --version  # Should be 20+
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u <your-username> --password-stdin
 ```
 
-If you have an older version, upgrade via [nodejs.org](https://nodejs.org/) or use a version manager like `nvm`.
+### The stack is running stale code
 
-### Missing environment variables (backend)
-
-If the backend fails to start with errors about missing env vars:
+`docker compose up` reuses whatever image is already cached locally. Pull first:
 
 ```bash
-cd backend
-cp .env.example .env  # Creates a working .env with defaults
+docker compose --env-file .env.docker pull
 ```
-
-The defaults in `.env.example` are sufficient for local development.
 
 ### Port already in use
 
-- **Frontend (3000):** If port 3000 is busy, Next.js will prompt to use another port
-- **Backend (4000):** Set a different port in `backend/.env`:
-  ```
-  PORT=4001
-  ```
+The stack publishes 3000, 4000, 5432, 9000 and 9001. Free the conflicting port,
+or override the host side of the mapping in a local compose override file.
 
-### npm install failures
+### Backend fails to start with env var errors
 
-- Clear npm cache: `npm cache clean --force`
-- Delete `node_modules` and `package-lock.json`, then retry
-- Ensure you're in the correct project directory (`frontend/` or `backend/`)
+`.env.docker` is the single source of environment for this stack. If the API
+adds a newly required variable, it must be added there — see the
+`shelterflex-api` README for the full list.
 
-### Soroban CLI not found
+### A service never becomes healthy
 
 ```bash
-stellar --version
-```
-
-If missing, install the [Stellar CLI](https://github.com/stellar/stellar-cli) with Soroban support.
-
-### cargo test fails (contracts)
-
-Ensure you have the WASM target installed:
-
-```bash
-rustup target add wasm32-unknown-unknown
+docker compose logs backend    # or frontend, postgres, minio
+docker compose ps              # shows health status per service
 ```
 
 ## Contributing
 
+Open issues live in the repository they affect — check
+[shelterflex-web](https://github.com/Shelterflex/shelterflex-web/issues),
+[shelterflex-api](https://github.com/Shelterflex/shelterflex-api/issues),
+[shelterflex-contracts](https://github.com/Shelterflex/shelterflex-contracts/issues),
+or [this repository](https://github.com/Shelterflex/shelterflex-platform/issues).
+
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for:
 
-- Local setup for FE/BE/contracts
 - How to create issues and pick up tasks
-- Issue types (frontend/backend/contract) and **Definition of Done**
+- Issue types and **Definition of Done**
 - PR process and review checklist
 
 Contributions are made via **Fork -> Branch -> Pull Request**.
 
-If you want a curated list of issues (including good first issues), see [`docs/ISSUES_CATALOG.md`](docs/ISSUES_CATALOG.md).
-
-For monorepo navigation and where to put new code, see [`docs/REPO_STRUCTURE.md`](docs/REPO_STRUCTURE.md).
+For how the repositories fit together and where new code belongs, see
+[`docs/REPO_STRUCTURE.md`](docs/REPO_STRUCTURE.md).
 
 ## Security Scanning
 
@@ -250,4 +244,3 @@ npm run scan
 ```
 
 See [`security-scan/README.md`](security-scan/README.md) for detailed documentation.
-# CI check

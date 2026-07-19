@@ -1,19 +1,11 @@
 node_modules/
 .DS_Store
 
-# Frontend
-frontend/.next
-frontend/out
-frontend/.env
-frontend/.env.*
+# The frontend, backend and contracts live in their own repositories and are
+# consumed here as published container images, so no build output from them
+# lands in this tree.
 
-# Backend
-backend/dist
-backend/.env
-
-# Contracts
-contracts/target
-contracts/.soroban
+.env
 
 docs/PLATFORM_OVERVIEW.md
 

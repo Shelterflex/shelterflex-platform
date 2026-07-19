@@ -1,6 +1,0 @@
-[submodule "frontend"]
-	path = frontend
-	url = https://github.com/Shelterflex/shelterflex-web.git
-[submodule "backend"]
-	path = backend
-	url = https://github.com/Shelterflex/shelterflex-api.git

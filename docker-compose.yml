@@ -1,3 +1,16 @@
+# Integration stack for the Shelterflex platform.
+#
+# The application services are consumed as prebuilt images published to GHCR by
+# shelterflex-web and shelterflex-api. This repo does not contain, build, or
+# vendor their source — the four repositories are independent and integrate at
+# the artifact level.
+#
+# Pin a known-good pair for reproducible runs:
+#   API_TAG=sha-84fe55b WEB_TAG=sha-486b4f7 docker compose up
+#
+# To develop the frontend or backend itself, work in that repository and run it
+# directly; see its README. This stack is for integration, not for hot-reload.
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -17,9 +30,7 @@ services:
       start_period: 10s
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.dev
+    image: ghcr.io/shelterflex/shelterflex-api:${API_TAG:-main}
     env_file:
       - .env.docker
     environment:
@@ -29,11 +40,20 @@ services:
       S3_ACCESS_KEY_ID: minioadmin
       S3_SECRET_ACCESS_KEY: minioadmin
       S3_FORCE_PATH_STYLE: "true"
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
     ports:
       - "4000:4000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
@@ -71,22 +91,28 @@ services:
       "
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
+    image: ghcr.io/shelterflex/shelterflex-web:${WEB_TAG:-main}
     env_file:
       - .env.docker
     environment:
       HOSTNAME: "0.0.0.0"
-      WATCHPACK_POLLING: "true"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
     ports:
       - "3000:3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
   stellar-quickstart:
     profiles: ["contracts"]

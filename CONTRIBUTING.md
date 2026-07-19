@@ -21,20 +21,28 @@ shared documentation, CI reusable workflows, and golden test vectors.
 
 ## Development setup
 
-The web and api repos are included as submodules so compose can build them.
+The web and api services run from images published to GHCR by their own
+repositories. This repo contains no application source and builds nothing.
 
 ```bash
-git clone --recurse-submodules https://github.com/Shelterflex/shelterflex-platform.git
+git clone https://github.com/Shelterflex/shelterflex-platform.git
 cd shelterflex-platform
 cp .env.docker .env
-docker compose up --build       # web:3000 api:4000 postgres:5432 minio:9000/9001
+docker compose up               # web:3000 api:4000 postgres:5432 minio:9000/9001
 ```
 
-Update submodules to the latest app code with:
+Pull the latest published app images with:
 
 ```bash
-git submodule update --remote --merge
+docker compose pull
 ```
+
+To pin a specific pair, set `API_TAG` / `WEB_TAG` (see `.env.docker`).
+
+To change the frontend or backend itself, work in
+[shelterflex-web](https://github.com/Shelterflex/shelterflex-web) or
+[shelterflex-api](https://github.com/Shelterflex/shelterflex-api) — this stack
+runs prebuilt images and does not hot-reload.
 
 ## Full-stack e2e
 
