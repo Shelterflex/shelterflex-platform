@@ -65,6 +65,17 @@ their own CI. Local run:
 cd security-scan && npm install && ./validate.sh
 ```
 
+## Documentation
+
+To ensure documentation remains accurate and does not reference non-existent files or directories, you can run the documentation link checker:
+
+```bash
+npm run docs:check
+```
+
+This will verify both standard Markdown links and path references in `bash` code blocks. If you need to check external links as well, use `npm run docs:check -- --external`.
+To deliberately ignore valid cross-repo references, add them to the `.docscheckignore` file at the repository root.
+
 ## Creating an issue
 
 Use the templates under `.github/ISSUE_TEMPLATE/`. Check existing issues first.
