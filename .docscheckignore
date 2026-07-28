@@ -1,0 +1,8 @@
+backend
+contracts
+src/routes/
+<contract_name>/src/lib.rs
+e2e
+security-scan
+shelterflex-platform
+.env

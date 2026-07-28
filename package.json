@@ -1,0 +1,25 @@
+{
+  "name": "shelterflex-platform",
+  "version": "1.0.0",
+  "description": "Shelterflex is a **Rent Now, Pay Later (RNPL)** platform that enables tenants to secure rental properties with an initial deposit and pay the remaining balance in monthly installments — while allowing landlords to list properties directly, reducing reliance on traditional agents.",
+  "main": ".eslintrc.security.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "docs:check": "node scripts/check-doc-links.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shelterflex/shelterflex-platform.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Shelterflex/shelterflex-platform/issues"
+  },
+  "homepage": "https://github.com/Shelterflex/shelterflex-platform#readme"
+}
