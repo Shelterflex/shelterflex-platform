@@ -1,11 +1,6 @@
-import { test, expect, LoginPage } from "../helpers/fixtures";
+import { landlordTest as test, expect } from "../helpers/fixtures";
 
 test.describe("Landlord listing creation", () => {
-  test.beforeEach(async ({ page, seed }) => {
-    const login = new LoginPage(page);
-    await login.goto();
-    await login.login(seed.users.landlord.email, seed.users.landlord.password);
-  });
 
   test("fill all sections → submit → appears in Pending Review", async ({
     page,

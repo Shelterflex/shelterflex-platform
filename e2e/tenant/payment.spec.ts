@@ -1,11 +1,6 @@
-import { test, expect, LoginPage } from "../helpers/fixtures";
+import { tenantTest as test, expect } from "../helpers/fixtures";
 
 test.describe("Tenant payment flow", () => {
-  test.beforeEach(async ({ page, seed }) => {
-    const login = new LoginPage(page);
-    await login.goto();
-    await login.login(seed.users.tenant.email, seed.users.tenant.password);
-  });
 
   test("initiate payment → success state", async ({ page }) => {
     await page.goto("/dashboard/tenant/payments");

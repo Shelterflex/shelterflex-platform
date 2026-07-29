@@ -14,7 +14,10 @@ export interface SeedResult {
   runId: string;
 }
 
-const DB_URL = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL!;
+const DB_URL =
+  process.env.TEST_DATABASE_URL ??
+  process.env.DATABASE_URL ??
+  "postgresql://postgres:postgres@127.0.0.1:5432/shelterflex_dev";
 
 export async function seedTestData(): Promise<SeedResult> {
   const pool = new Pool({ connectionString: DB_URL });
