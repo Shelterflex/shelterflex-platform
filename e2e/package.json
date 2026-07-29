@@ -1,0 +1,15 @@
+{
+  "name": "shelterflex-platform-e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "npx playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.53.2",
+    "pg": "^8.11.1",
+    "typescript": "^5.6.2",
+    "@types/node": "^20.11.0"
+  }
+}

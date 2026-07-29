@@ -1,11 +1,6 @@
-import { test, expect, LoginPage } from "../helpers/fixtures";
+import { adminTest as test, expect } from "../helpers/fixtures";
 
 test.describe("Admin KYC review", () => {
-  test.beforeEach(async ({ page, seed }) => {
-    const login = new LoginPage(page);
-    await login.goto();
-    await login.login(seed.users.admin.email, seed.users.admin.password);
-  });
 
   test("open pending KYC submission → approve → status changes", async ({
     page,

@@ -1,14 +1,6 @@
-import { test, expect, LoginPage } from "../helpers/fixtures";
+import { whistleblowerTest as test, expect } from "../helpers/fixtures";
 
 test.describe("Whistleblower report submission", () => {
-  test.beforeEach(async ({ page, seed }) => {
-    const login = new LoginPage(page);
-    await login.goto();
-    await login.login(
-      seed.users.whistleblower.email,
-      seed.users.whistleblower.password,
-    );
-  });
 
   test("submit a report against a listing → confirmation shown", async ({
     page,
