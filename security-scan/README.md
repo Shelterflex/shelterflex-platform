@@ -8,7 +8,7 @@ Comprehensive security scanning system for the CI/CD pipeline that detects vulne
 - **Static Code Analysis**: Analyzes TypeScript/JavaScript/Rust code for security issues
 - **Secret Detection**: Scans commits for exposed credentials and API keys
 - **PR Integration**: Automatically updates pull requests with scan results
-- **Fail-Fast**: Blocks merges when critical or high severity vulnerabilities are detected
+- **Advisory Mode**: Reports findings but does not block merges (see below for enabling blocking mode)
 
 ## Components
 
@@ -61,15 +61,21 @@ To validate scanner configuration without blocking PRs:
 TEST_MODE=true npm run scan
 ```
 
+## Current Behavior
+
+**Important**: The security scanner currently runs in advisory mode only. It reports findings but does not block merges, regardless of severity level. This is due to the GitHub Actions workflow configuration that swallows the orchestrator's exit code (see "Enabling Blocking Mode" below).
+
+The orchestrator itself is correctly implemented to exit with code 1 when critical or high vulnerabilities are detected, but this exit code is not propagated through the current workflow setup.
+
 ## Severity Levels
 
-| Severity | CVSS Score | Action             |
-| -------- | ---------- | ------------------ |
-| Critical | 9.0-10.0   | Block merge        |
-| High     | 7.0-8.9    | Block merge        |
-| Medium   | 4.0-6.9    | Warn, allow merge  |
-| Low      | 0.1-3.9    | Warn, allow merge  |
-| Info     | 0.0        | Informational only |
+| Severity | CVSS Score | Current Action    | Blocking Action (if enabled) |
+| -------- | ---------- | ------------------ | ---------------------------- |
+| Critical | 9.0-10.0   | Warn, allow merge  | Block merge                  |
+| High     | 7.0-8.9    | Warn, allow merge  | Block merge                  |
+| Medium   | 4.0-6.9    | Warn, allow merge  | Warn, allow merge            |
+| Low      | 0.1-3.9    | Warn, allow merge  | Warn, allow merge            |
+| Info     | 0.0        | Informational only | Informational only           |
 
 ## Output
 
@@ -136,6 +142,77 @@ All three should be detected by the scanner.
 - Update `.gitleaks.toml` allowlist for secret false positives
 - Adjust Semgrep rules in `semgrep.yml`
 - Configure ESLint rule severity in `.eslintrc.security.js`
+
+## Enabling Blocking Mode
+
+To make the security scanner actually block merges when critical or high severity vulnerabilities are detected, the GitHub Actions workflow must be modified to respect the orchestrator's exit code.
+
+### Required Changes to `.github/workflows/security-scan-reusable.yml`
+
+The reusable workflow currently has three layers that bypass the exit code. All three must be removed:
+
+1. **Remove job-level `continue-on-error`** (line ~23):
+   ```yaml
+   jobs:
+     security-scan:
+   -   continue-on-error: true  # ← REMOVE THIS LINE
+   ```
+
+2. **Remove step-level `continue-on-error`** (line ~35):
+   ```yaml
+       - name: Run security scan
+         id: scan
+   -     continue-on-error: true  # ← REMOVE THIS LINE
+         run: |
+           node .platform/security-scan/dist/orchestrator.js || true  # ← ALSO REMOVE || true
+   ```
+
+3. **Remove `|| true` from the orchestrator invocation** (line ~37):
+   ```yaml
+         run: |
+   -       node .platform/security-scan/dist/orchestrator.js || true  # ← CHANGE TO:
+   +       node .platform/security-scan/dist/orchestrator.js
+   ```
+
+4. **Update the final step to use the exit code instead of reading the results file** (lines ~40-43):
+   ```yaml
+       - name: Note critical/high (non-blocking)
+   -     if: steps.scan.outputs.status == 'fail'
+   -     run: echo "⚠️ Security scan found critical/high vulnerabilities. Review before merging."
+   ```
+   
+   This step can be removed entirely, as the job will now fail at the orchestrator step when critical/high vulnerabilities are found.
+
+### Which Mechanism to Use for Blocking
+
+Once the above changes are applied, the workflow should key off the **orchestrator's exit code**, not the results file. The orchestrator already implements the correct logic:
+
+- `status === "fail"` → exit 1 (blocks merge)
+- `status === "error"` → exit 0 (scanner errors don't block)
+- `status === "pass"` → exit 0 (clean scan)
+
+The `security-scan-results.json` file is still written for PR comments and reporting, but the blocking behavior should rely on the exit code, which is the canonical signal.
+
+### Impact on Consuming Repositories
+
+After applying these changes, the following behavior will occur in each consuming repository:
+
+- **shelterflex-web**: PRs with critical/high vulnerabilities will be blocked from merging
+- **shelterflex-api**: PRs with critical/high vulnerabilities will be blocked from merging
+- **shelterflex-contracts**: PRs with critical/high vulnerabilities will be blocked from merging
+
+Scanner errors (e.g., timeout, tool not installed) will continue to allow merges, as designed.
+
+### Testing the Blocking Behavior
+
+After applying the workflow changes, verify blocking behavior by:
+
+1. Creating a test PR with a known vulnerable dependency (e.g., `lodash@4.17.15`)
+2. Confirming the GitHub Actions check fails
+3. Removing the vulnerable dependency
+4. Confirming the check passes
+
+The test suite in `tests/` verifies the orchestrator's exit code contract independently of the workflow.
 
 ## Maintenance
 
