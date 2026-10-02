@@ -5,7 +5,6 @@ node_modules/
 # consumed here as published container images, so no build output from them
 # lands in this tree.
 
-.env
 
 e2e/playwright-report/
 e2e/test-results/
@@ -25,3 +24,4 @@ pr.md
 checks.md
 ISSUE_437_IMPLEMENTATION.md
 ISSUE_CONTEXT.md
+config.bat
